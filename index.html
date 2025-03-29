@@ -3,80 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Announcer with TTS</title>
+    <title>🔊 Ultimate Announcer</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-            transition: background 0.3s, color 0.3s;
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; transition: background 0.3s, color 0.3s; }
+        #announcement { font-size: 24px; font-weight: bold; color: red; margin-top: 20px; animation: fadeIn 1s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #customMessage, #announceBtn, #pauseBtn, #resumeBtn, #stopBtn, #voiceSelect, #speedControl, #pitchControl, #themeToggle, #colorPicker {
+            margin: 10px; padding: 10px; font-size: 16px;
         }
-        #announcement {
-            font-size: 24px;
-            font-weight: bold;
-            color: red;
-            margin-top: 20px;
-            animation: fadeIn 1s;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        #customMessage, #announceBtn, #pauseBtn, #resumeBtn, #stopBtn, #voiceSelect, #speedControl, #pitchControl, #themeToggle {
-            margin: 10px;
-            padding: 10px;
-            font-size: 16px;
-        }
-        #history {
-            margin-top: 20px;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-        }
-        .dark-mode {
-            background: #222;
-            color: white;
-        }
+        .dark-mode { background: #222; color: white; }
+        .countdown { font-size: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>🔊 Smart Announcement System</h1>
+    <h1>🔊 Ultimate Announcement System</h1>
     <p id="announcement">Waiting for the next announcement...</p>
+    <p class="countdown">Next in: <span id="countdownTimer">--:--</span></p>
 
     <input type="text" id="customMessage" placeholder="Type a custom announcement">
-    <button id="announceBtn">Speak Announcement</button>
-    <button id="pauseBtn">Pause</button>
-    <button id="resumeBtn">Resume</button>
-    <button id="stopBtn">Stop</button>
+    <button id="announceBtn">🔊 Speak</button>
+    <button id="pauseBtn">⏸ Pause</button>
+    <button id="resumeBtn">▶️ Resume</button>
+    <button id="stopBtn">⏹ Stop</button>
 
     <br>
     <label>Voice:</label>
     <select id="voiceSelect"></select>
+    <button id="previewVoice">🔊 Preview Voice</button>
+    
     <label>Speed:</label>
     <input type="range" id="speedControl" min="0.5" max="2" step="0.1" value="1">
     <label>Pitch:</label>
     <input type="range" id="pitchControl" min="0.5" max="2" step="0.1" value="1">
 
     <br>
-    <button id="themeToggle">Toggle Dark Mode</button>
-
+    <button id="themeToggle">🌙 Dark Mode</button>
+    <input type="color" id="colorPicker" value="#ff0000">
+    
     <h2>📜 Announcement History</h2>
     <div id="history"></div>
 
     <script>
-        console.log("Script is running!");
+        console.log("Ultimate Announcer Running!");
 
-        // Schedule (HH:MM format)
         let schedule = JSON.parse(localStorage.getItem("schedule")) || {
-            "08:00": "Good morning! Time to start your day. 🌞",
-            "12:00": "It's lunchtime! Take a break. 🍽️",
+            "08:00": "Good morning! The weather is sunny at 72°F. ☀️",
+            "12:00": "Lunch break! Don't forget to eat. 🍔",
             "15:00": "Afternoon reminder: Stay hydrated! 💧",
-            "23:35": "Good evening! Time to wrap up your work. 🌇"
+            "23:37": "Silent mode activated. No more announcements until morning."
         };
 
-        // Speech settings
         let voices = [];
         const synth = window.speechSynthesis;
         const voiceSelect = document.getElementById("voiceSelect");
@@ -119,44 +96,40 @@
 
         function checkTime() {
             const now = new Date();
-            const hours = now.getHours().toString().padStart(2, '0');
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const currentTime = `${hours}:${minutes}`;
-
+            const currentTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
             console.log("Checking time:", currentTime);
+            if (schedule[currentTime] && !(now.getHours() >= 22 || now.getHours() < 6)) {
+                speakAnnouncement(schedule[currentTime]);
+            }
+        }
 
-            if (schedule[currentTime]) {
-                const message = schedule[currentTime];
-                document.getElementById("announcement").innerText = message;
-                speakAnnouncement(message);
+        function updateCountdown() {
+            const now = new Date();
+            let nextTime = Object.keys(schedule).find(time => time > now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0'));
+            if (nextTime) {
+                let [hh, mm] = nextTime.split(':').map(Number);
+                let targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm);
+                let diff = targetTime - now;
+                let minutesLeft = Math.floor(diff / 60000);
+                document.getElementById("countdownTimer").innerText = `${minutesLeft} min`;
+            } else {
+                document.getElementById("countdownTimer").innerText = "No more today!";
             }
         }
 
         setInterval(checkTime, 60000);
+        setInterval(updateCountdown, 30000);
         checkTime();
+        updateCountdown();
 
-        document.getElementById("announceBtn").addEventListener("click", function () {
-            const customMessage = document.getElementById("customMessage").value;
-            if (customMessage.trim() !== "") {
-                document.getElementById("announcement").innerText = customMessage;
-                speakAnnouncement(customMessage);
-            }
+        document.getElementById("announceBtn").addEventListener("click", () => {
+            speakAnnouncement(document.getElementById("customMessage").value);
         });
 
-        document.getElementById("pauseBtn").addEventListener("click", () => synth.pause());
-        document.getElementById("resumeBtn").addEventListener("click", () => synth.resume());
-        document.getElementById("stopBtn").addEventListener("click", () => synth.cancel());
-
-        // Dark Mode Toggle
-        const themeToggle = document.getElementById("themeToggle");
-        themeToggle.addEventListener("click", () => {
-            document.body.classList.toggle("dark-mode");
-            localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+        document.getElementById("previewVoice").addEventListener("click", () => {
+            speakAnnouncement("This is a voice test.");
         });
 
-        if (localStorage.getItem("theme") === "dark") {
-            document.body.classList.add("dark-mode");
-        }
     </script>
 
 </body>
