@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automated Announcements</title>
+    <title>Automated Announcements with TTS</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,6 +14,18 @@
             font-size: 24px;
             font-weight: bold;
             color: red;
+            margin-top: 20px;
+        }
+        #customMessage {
+            margin-top: 20px;
+            width: 80%;
+            padding: 10px;
+        }
+        #announceBtn {
+            margin-top: 10px;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -22,14 +34,24 @@
     <h1>Automated Announcement System</h1>
     <p id="announcement">Waiting for the next announcement...</p>
 
+    <input type="text" id="customMessage" placeholder="Type a custom announcement">
+    <button id="announceBtn">Speak Announcement</button>
+
     <script>
+        console.log("Script is running!");
+
         // Define the schedule (format: "HH:MM")
         const schedule = {
-            "23.29": "Good morning! Time to start your day. 🌞",
+            "08:00": "Good morning! Time to start your day. 🌞",
             "12:00": "It's lunchtime! Take a break. 🍽️",
             "15:00": "Afternoon reminder: Stay hydrated! 💧",
-            "18:00": "Good evening! Time to wrap up your work. 🌇"
+            "23:35": "Good evening! Time to wrap up your work. 🌇"
         };
+
+        function speakAnnouncement(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            speechSynthesis.speak(utterance);
+        }
 
         function checkTime() {
             const now = new Date();
@@ -37,16 +59,27 @@
             const minutes = now.getMinutes().toString().padStart(2, '0');
             const currentTime = `${hours}:${minutes}`;
 
+            console.log("Checking time:", currentTime);
+
             if (schedule[currentTime]) {
-                document.getElementById("announcement").innerText = schedule[currentTime];
+                const message = schedule[currentTime];
+                document.getElementById("announcement").innerText = message;
+                speakAnnouncement(message);
             }
         }
 
         // Check every minute
         setInterval(checkTime, 60000);
+        checkTime(); // Run immediately on page load
 
-        // Run immediately when page loads
-        checkTime();
+        // Handle custom announcement
+        document.getElementById("announceBtn").addEventListener("click", function () {
+            const customMessage = document.getElementById("customMessage").value;
+            if (customMessage.trim() !== "") {
+                document.getElementById("announcement").innerText = customMessage;
+                speakAnnouncement(customMessage);
+            }
+        });
     </script>
 
 </body>
