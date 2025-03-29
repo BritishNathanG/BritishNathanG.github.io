@@ -21,8 +21,16 @@ particlesJS('particles-js', {
   }
 });
 
+// Function to populate the voice selection
 function populateVoices() {
   voices = synth.getVoices();
+
+  // Ensure voices are loaded correctly
+  if (voices.length === 0) {
+    setTimeout(populateVoices, 100); // Retry after 100ms if voices aren't available
+    return;
+  }
+
   voiceSelect.innerHTML = '';
   voices.forEach((voice, index) => {
     const option = document.createElement('option');
@@ -30,8 +38,15 @@ function populateVoices() {
     option.value = index;
     voiceSelect.appendChild(option);
   });
+
+  // Set default voice if available
+  if (voices.length > 0) {
+    currentVoice = 0; // Default to first available voice
+    voiceSelect.value = currentVoice;
+  }
 }
 
+// Function to speak the message
 function speakMessage() {
   const message = announcementInput.value;
   if (!message) return;
@@ -44,24 +59,16 @@ function speakMessage() {
   synth.speak(utterance);
 }
 
+// Function to toggle theme
 function toggleTheme() {
   document.body.classList.toggle('dark');
   document.body.classList.toggle('light');
 }
 
+// Event Listeners
 voiceSelect.addEventListener('change', (e) => {
   currentVoice = e.target.value;
 });
 
 speedInput.addEventListener('input', (e) => {
-  currentSpeed = e.target.value;
-});
-
-pitchInput.addEventListener('input', (e) => {
-  currentPitch = e.target.value;
-});
-
-announceButton.addEventListener('click', speakMessage);
-themeToggle.addEventListener('click', toggleTheme);
-
-window.addEventListener('load', populateVoices);
+  currentSpeed = e.target
