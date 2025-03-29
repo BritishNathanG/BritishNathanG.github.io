@@ -1,136 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔊 Ultimate Announcer</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; transition: background 0.3s, color 0.3s; }
-        #announcement { font-size: 24px; font-weight: bold; color: red; margin-top: 20px; animation: fadeIn 1s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        #customMessage, #announceBtn, #pauseBtn, #resumeBtn, #stopBtn, #voiceSelect, #speedControl, #pitchControl, #themeToggle, #colorPicker {
-            margin: 10px; padding: 10px; font-size: 16px;
-        }
-        .dark-mode { background: #222; color: white; }
-        .countdown { font-size: 20px; font-weight: bold; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ultimate Announcer</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
 </head>
-<body>
-
-    <h1>🔊 Ultimate Announcement System</h1>
-    <p id="announcement">Waiting for the next announcement...</p>
-    <p class="countdown">Next in: <span id="countdownTimer">--:--</span></p>
-
-    <input type="text" id="customMessage" placeholder="Type a custom announcement">
-    <button id="announceBtn">🔊 Speak</button>
-    <button id="pauseBtn">⏸ Pause</button>
-    <button id="resumeBtn">▶️ Resume</button>
-    <button id="stopBtn">⏹ Stop</button>
-
-    <br>
-    <label>Voice:</label>
-    <select id="voiceSelect"></select>
-    <button id="previewVoice">🔊 Preview Voice</button>
-    
-    <label>Speed:</label>
-    <input type="range" id="speedControl" min="0.5" max="2" step="0.1" value="1">
-    <label>Pitch:</label>
-    <input type="range" id="pitchControl" min="0.5" max="2" step="0.1" value="1">
-
-    <br>
-    <button id="themeToggle">🌙 Dark Mode</button>
-    <input type="color" id="colorPicker" value="#ff0000">
-    
-    <h2>📜 Announcement History</h2>
-    <div id="history"></div>
-
-    <script>
-        console.log("Ultimate Announcer Running!");
-
-        let schedule = JSON.parse(localStorage.getItem("schedule")) || {
-            "08:00": "Good morning! The weather is sunny at 72°F. ☀️",
-            "12:00": "Lunch break! Don't forget to eat. 🍔",
-            "15:00": "Afternoon reminder: Stay hydrated! 💧",
-            "22:00": "Silent mode activated. No more announcements until morning."
-        };
-
-        let voices = [];
-        const synth = window.speechSynthesis;
-        const voiceSelect = document.getElementById("voiceSelect");
-        const speedControl = document.getElementById("speedControl");
-        const pitchControl = document.getElementById("pitchControl");
-
-        function populateVoices() {
-            voices = synth.getVoices();
-            voiceSelect.innerHTML = voices.map((voice, index) => `<option value="${index}">${voice.name} (${voice.lang})</option>`).join('');
-        }
-        populateVoices();
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = populateVoices;
-        }
-
-        function speakAnnouncement(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.voice = voices[voiceSelect.value] || voices[0];
-            utterance.rate = speedControl.value;
-            utterance.pitch = pitchControl.value;
-            synth.speak(utterance);
-            logHistory(text);
-            sendNotification(text);
-        }
-
-        function logHistory(text) {
-            const historyDiv = document.getElementById("history");
-            const newLog = document.createElement("p");
-            newLog.textContent = new Date().toLocaleTimeString() + " - " + text;
-            historyDiv.prepend(newLog);
-        }
-
-        function sendNotification(message) {
-            if (Notification.permission === "granted") {
-                new Notification("📢 Announcement", { body: message });
-            } else if (Notification.permission !== "denied") {
-                Notification.requestPermission();
-            }
-        }
-
-        function checkTime() {
-            const now = new Date();
-            const currentTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-            console.log("Checking time:", currentTime);
-            if (schedule[currentTime] && !(now.getHours() >= 22 || now.getHours() < 6)) {
-                speakAnnouncement(schedule[currentTime]);
-            }
-        }
-
-        function updateCountdown() {
-            const now = new Date();
-            let nextTime = Object.keys(schedule).find(time => time > now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0'));
-            if (nextTime) {
-                let [hh, mm] = nextTime.split(':').map(Number);
-                let targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm);
-                let diff = targetTime - now;
-                let minutesLeft = Math.floor(diff / 60000);
-                document.getElementById("countdownTimer").innerText = `${minutesLeft} min`;
-            } else {
-                document.getElementById("countdownTimer").innerText = "No more today!";
-            }
-        }
-
-        setInterval(checkTime, 60000);
-        setInterval(updateCountdown, 30000);
-        checkTime();
-        updateCountdown();
-
-        document.getElementById("announceBtn").addEventListener("click", () => {
-            speakAnnouncement(document.getElementById("customMessage").value);
-        });
-
-        document.getElementById("previewVoice").addEventListener("click", () => {
-            speakAnnouncement("This is a voice test.");
-        });
-
-    </script>
-
+<body class="dark">
+  <div class="container">
+    <h1>🎙 Ultimate Announcer</h1>
+    <input type="text" id="announcementInput" placeholder="Type your announcement..." />
+    <button id="announceButton">🔊 Announce</button>
+    <div class="controls">
+      <label for="voiceSelect">Select Voice:</label>
+      <select id="voiceSelect"></select>
+      <label for="speed">Speed:</label>
+      <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1" />
+      <label for="pitch">Pitch:</label>
+      <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1" />
+      <button id="themeToggle">Toggle Theme 🌗</button>
+    </div>
+  </div>
+  <div id="particles-js"></div>
+  <script src="script.js"></script>
 </body>
 </html>
