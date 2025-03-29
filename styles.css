@@ -32,12 +32,18 @@ button:hover {
   background-color: #319795;
 }
 
-input[type="range"] {
+input[type="range"], input[type="color"], select {
   width: 100%;
 }
 
 .controls {
   margin-top: 20px;
+}
+
+.history {
+  margin-top: 20px;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 #themeToggle {
