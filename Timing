@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Announcements</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        #announcement {
+            font-size: 24px;
+            font-weight: bold;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Automated Announcement System</h1>
+    <p id="announcement">Waiting for the next announcement...</p>
+
+    <script>
+        // Define the schedule (format: "HH:MM")
+        const schedule = {
+            "08:00": "Good morning! Time to start your day. 🌞",
+            "12:00": "It's lunchtime! Take a break. 🍽️",
+            "15:00": "Afternoon reminder: Stay hydrated! 💧",
+            "18:00": "Good evening! Time to wrap up your work. 🌇"
+        };
+
+        function checkTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0'); 
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const currentTime = `${hours}:${minutes}`;
+
+            if (schedule[currentTime]) {
+                document.getElementById("announcement").innerText = schedule[currentTime];
+            }
+        }
+
+        // Check every minute
+        setInterval(checkTime, 60000);
+
+        // Run immediately when page loads
+        checkTime();
+    </script>
+
+</body>
+</html>
