@@ -3,59 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automated Announcements with TTS</title>
+    <title>Smart Announcer with TTS</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             padding: 20px;
+            transition: background 0.3s, color 0.3s;
         }
         #announcement {
             font-size: 24px;
             font-weight: bold;
             color: red;
             margin-top: 20px;
+            animation: fadeIn 1s;
         }
-        #customMessage {
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        #customMessage, #announceBtn, #pauseBtn, #resumeBtn, #stopBtn, #voiceSelect, #speedControl, #pitchControl, #themeToggle {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #history {
             margin-top: 20px;
-            width: 80%;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
             padding: 10px;
         }
-        #announceBtn {
-            margin-top: 10px;
-            padding: 10px 15px;
-            font-size: 16px;
-            cursor: pointer;
+        .dark-mode {
+            background: #222;
+            color: white;
         }
     </style>
 </head>
 <body>
 
-    <h1>Automated Announcement System</h1>
+    <h1>🔊 Smart Announcement System</h1>
     <p id="announcement">Waiting for the next announcement...</p>
 
     <input type="text" id="customMessage" placeholder="Type a custom announcement">
     <button id="announceBtn">Speak Announcement</button>
+    <button id="pauseBtn">Pause</button>
+    <button id="resumeBtn">Resume</button>
+    <button id="stopBtn">Stop</button>
+
+    <br>
+    <label>Voice:</label>
+    <select id="voiceSelect"></select>
+    <label>Speed:</label>
+    <input type="range" id="speedControl" min="0.5" max="2" step="0.1" value="1">
+    <label>Pitch:</label>
+    <input type="range" id="pitchControl" min="0.5" max="2" step="0.1" value="1">
+
+    <br>
+    <button id="themeToggle">Toggle Dark Mode</button>
+
+    <h2>📜 Announcement History</h2>
+    <div id="history"></div>
 
     <script>
         console.log("Script is running!");
 
-        // Define the schedule (format: "HH:MM")
-        const schedule = {
+        // Schedule (HH:MM format)
+        let schedule = JSON.parse(localStorage.getItem("schedule")) || {
             "08:00": "Good morning! Time to start your day. 🌞",
             "12:00": "It's lunchtime! Take a break. 🍽️",
             "15:00": "Afternoon reminder: Stay hydrated! 💧",
             "23:35": "Good evening! Time to wrap up your work. 🌇"
         };
 
+        // Speech settings
+        let voices = [];
+        const synth = window.speechSynthesis;
+        const voiceSelect = document.getElementById("voiceSelect");
+        const speedControl = document.getElementById("speedControl");
+        const pitchControl = document.getElementById("pitchControl");
+
+        function populateVoices() {
+            voices = synth.getVoices();
+            voiceSelect.innerHTML = voices.map((voice, index) => `<option value="${index}">${voice.name} (${voice.lang})</option>`).join('');
+        }
+        populateVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoices;
+        }
+
         function speakAnnouncement(text) {
             const utterance = new SpeechSynthesisUtterance(text);
-            speechSynthesis.speak(utterance);
+            utterance.voice = voices[voiceSelect.value] || voices[0];
+            utterance.rate = speedControl.value;
+            utterance.pitch = pitchControl.value;
+            synth.speak(utterance);
+            logHistory(text);
+            sendNotification(text);
+        }
+
+        function logHistory(text) {
+            const historyDiv = document.getElementById("history");
+            const newLog = document.createElement("p");
+            newLog.textContent = new Date().toLocaleTimeString() + " - " + text;
+            historyDiv.prepend(newLog);
+        }
+
+        function sendNotification(message) {
+            if (Notification.permission === "granted") {
+                new Notification("📢 Announcement", { body: message });
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
         }
 
         function checkTime() {
             const now = new Date();
-            const hours = now.getHours().toString().padStart(2, '0'); 
+            const hours = now.getHours().toString().padStart(2, '0');
             const minutes = now.getMinutes().toString().padStart(2, '0');
             const currentTime = `${hours}:${minutes}`;
 
@@ -68,11 +132,9 @@
             }
         }
 
-        // Check every minute
         setInterval(checkTime, 60000);
-        checkTime(); // Run immediately on page load
+        checkTime();
 
-        // Handle custom announcement
         document.getElementById("announceBtn").addEventListener("click", function () {
             const customMessage = document.getElementById("customMessage").value;
             if (customMessage.trim() !== "") {
@@ -80,6 +142,21 @@
                 speakAnnouncement(customMessage);
             }
         });
+
+        document.getElementById("pauseBtn").addEventListener("click", () => synth.pause());
+        document.getElementById("resumeBtn").addEventListener("click", () => synth.resume());
+        document.getElementById("stopBtn").addEventListener("click", () => synth.cancel());
+
+        // Dark Mode Toggle
+        const themeToggle = document.getElementById("themeToggle");
+        themeToggle.addEventListener("click", () => {
+            document.body.classList.toggle("dark-mode");
+            localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+        });
+
+        if (localStorage.getItem("theme") === "dark") {
+            document.body.classList.add("dark-mode");
+        }
     </script>
 
 </body>
