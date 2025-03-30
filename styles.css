@@ -45,3 +45,31 @@ body.dark-mode button {
   background-color: #4A5568;
   color: #fff;
 }
+/* History Section Styling */
+.history {
+  margin-top: 30px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+}
+
+.history h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+#announcementHistory {
+  list-style-type: none;
+  padding: 0;
+}
+
+#announcementHistory li {
+  padding: 5px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 5px;
+}
+
+#announcementHistory li:last-child {
+  border-bottom: none;
+}
