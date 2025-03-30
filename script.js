@@ -110,4 +110,41 @@ function scheduleAnnouncement(time, message, repeat = 'none', voice = currentVoi
   if (delay > 0) {
     const scheduleDetails = { message, timestamp: scheduledTime.toLocaleString(), repeat };
     upcomingAnnouncements.push(scheduleDetails);
-    localStorage.setItem('upcomingAnnouncements', JSON
+    localStorage.setItem('upcomingAnnouncements', JSON.stringify(upcomingAnnouncements));
+    updateUpcoming();
+
+    setTimeout(() => {
+      speakMessage(message, voice);
+
+      // Handle repeating announcements
+      if (repeat === 'hourly') {
+        scheduleAnnouncement(time, message, repeat, voice);
+      } else if (repeat === 'daily') {
+        const nextDay = new Date(scheduledTime);
+        nextDay.setDate(nextDay.getDate() + 1);
+        scheduleAnnouncement(nextDay.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), message, repeat, voice);
+      }
+    }, delay);
+  } else {
+    alert("Please choose a future time for the announcement.");
+  }
+}
+
+// Scheduled announcement button click
+scheduleButton.addEventListener('click', () => {
+  const scheduledTime = scheduleTimeInput.value;
+  const message = announcementInput.value;
+  const repeat = scheduleRepeatSelect.value;
+  const voice = scheduleVoiceSelect.value === 'default' ? currentVoice : scheduleVoiceSelect.value;
+
+  if (scheduledTime && message) {
+    scheduleAnnouncement(scheduledTime, message, repeat, voice);
+    alert(`Announcement scheduled for ${scheduledTime}`);
+  }
+});
+
+// Load history and upcoming announcements when the page loads
+window.addEventListener('load', () => {
+  updateHistory();
+  updateUpcoming();
+});
