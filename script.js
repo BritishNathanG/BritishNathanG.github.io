@@ -176,3 +176,62 @@ window.addEventListener('load', () => {
     Notification.requestPermission();
   }
 });
+// Get elements for history section
+const historyList = document.getElementById('announcementHistory');
+
+// Retrieve stored history from localStorage (if any)
+let announcementHistory = JSON.parse(localStorage.getItem('announcementHistory')) || [];
+
+// Function to update the history section
+function updateHistory() {
+  // Clear the current history
+  historyList.innerHTML = '';
+  
+  // Iterate over stored announcements and add them to the list
+  announcementHistory.forEach((entry) => {
+    const li = document.createElement('li');
+    li.textContent = `${entry.timestamp}: ${entry.message}`;
+    historyList.appendChild(li);
+  });
+}
+
+// Function to save a new announcement to history
+function saveAnnouncementToHistory(message) {
+  const timestamp = new Date().toLocaleString(); // Get the current timestamp
+  const newEntry = { message, timestamp };
+
+  // Add the new entry to the history array
+  announcementHistory.push(newEntry);
+
+  // Save updated history to localStorage
+  localStorage.setItem('announcementHistory', JSON.stringify(announcementHistory));
+
+  // Update the history section on the page
+  updateHistory();
+}
+
+// Function to speak the message and save it to history
+function speakMessage(message) {
+  const utterance = new SpeechSynthesisUtterance(message);
+  utterance.voice = voices[currentVoice];
+  utterance.rate = currentSpeed;
+  utterance.pitch = currentPitch;
+  synth.speak(utterance);
+
+  // Save this announcement to the history after it's spoken
+  saveAnnouncementToHistory(message);
+}
+
+// Manual announcement button click
+announceButton.addEventListener('click', () => {
+  const message = announcementInput.value;
+  if (message) {
+    speakMessage(message);
+  }
+});
+
+// Load history when the page loads
+window.addEventListener('load', () => {
+  // Initialize history display on page load
+  updateHistory();
+});
