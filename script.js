@@ -1,34 +1,16 @@
 let voices = [];
 let currentVoice = null;
-let currentSpeed = 1;
-let currentPitch = 1;
-let history = [];
-
-const announcementInput = document.getElementById('announcementInput');
-const announceButton = document.getElementById('announceButton');
-const voiceSelect = document.getElementById('voiceSelect');
-const speedInput = document.getElementById('speed');
-const pitchInput = document.getElementById('pitch');
-const themeToggle = document.getElementById('themeToggle');
-const historyList = document.getElementById('historyList');
 
 const synth = window.speechSynthesis;
+const voiceSelect = document.getElementById('voiceSelect');
+const announceButton = document.getElementById('announceButton');
+const announcementInput = document.getElementById('announcementInput');
 
-// Set up particles.js
-particlesJS('particles-js', {
-  particles: {
-    number: { value: 100 },
-    size: { value: 3 },
-    move: { speed: 1 },
-    shape: { type: 'circle' },
-    color: { value: "#ffffff" }
-  }
-});
-
-// Function to populate voices
+// Populate voices after the page load
 function populateVoices() {
   voices = synth.getVoices();
-  voiceSelect.innerHTML = '';
+  voiceSelect.innerHTML = ''; // Clear the current voice options
+
   voices.forEach((voice, index) => {
     const option = document.createElement('option');
     option.textContent = voice.name;
@@ -36,71 +18,49 @@ function populateVoices() {
     voiceSelect.appendChild(option);
   });
 
+  // Set the default voice (if available)
   if (voices.length > 0) {
-    currentVoice = 0;
-    voiceSelect.value = currentVoice;
+    currentVoice = voices[0]; // Default voice
+    voiceSelect.value = 0; // Set the first voice as selected
   }
 }
 
-// Function to speak the message
+// Ensure voices are loaded
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = function() {
+    populateVoices();
+  };
+} else {
+  populateVoices(); // Fallback if no `onvoiceschanged` is supported
+}
+
+// Trigger the announcement
 function speakMessage() {
   const message = announcementInput.value;
   if (!message) return;
 
   const utterance = new SpeechSynthesisUtterance(message);
-  utterance.voice = voices[currentVoice] || voices[0];
-  utterance.rate = currentSpeed;
-  utterance.pitch = currentPitch;
+  utterance.voice = voices[currentVoice] || voices[0]; // Use selected or default voice
+  utterance.rate = 1; // Default speed
+  utterance.pitch = 1; // Default pitch
 
   synth.speak(utterance);
-
-  // Save and display the announcement in history
-  history.push(message);
-  if (history.length > 5) {
-    history.shift();
-  }
-  updateHistory();
 }
 
-// Function to toggle theme
-function toggleTheme() {
-  document.body.classList.toggle('dark');
-  document.body.classList.toggle('light');
-}
-
-// Function to update the history list
-function updateHistory() {
-  historyList.innerHTML = '';
-  history.forEach((item) => {
-    const listItem = document.createElement('li');
-    listItem.textContent = item;
-    historyList.appendChild(listItem);
-  });
-}
-
-// Event Listeners
-voiceSelect.addEventListener('change', (e) => {
-  currentVoice = e.target.value;
+// Event listener to change voice
+voiceSelect.addEventListener('change', function() {
+  currentVoice = voices[voiceSelect.value]; // Update the selected voice
 });
 
-speedInput.addEventListener('input', (e) => {
-  currentSpeed = e.target.value;
-});
-
-pitchInput.addEventListener('input', (e) => {
-  currentPitch = e.target.value;
-});
-
+// Event listener for the announce button
 announceButton.addEventListener('click', speakMessage);
-themeToggle.addEventListener('click', toggleTheme);
 
-// Populate voices once the page is fully loaded
+// Initial population of voices (wait for the page to fully load)
 window.addEventListener('load', () => {
-  populateVoices();
-
-  if (speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = () => {
-      populateVoices();
-    };
+  if (speechSynthesis.getVoices().length === 0) {
+    // Delay loading if voices are initially empty
+    setTimeout(populateVoices, 1000); // Try again after 1 second
+  } else {
+    populateVoices();
   }
 });
