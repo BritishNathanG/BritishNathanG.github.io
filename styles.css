@@ -1,50 +1,42 @@
-/* Basic Styles */
+/* General Page Styling */
 body {
   font-family: Arial, sans-serif;
-  padding: 20px;
-  background-color: #fff;
-  color: #333;
+  background-color: #f4f4f9;
   margin: 0;
-}
-
-h1, h2 {
-  color: #444;
-}
-
-textarea, select, input, button {
-  margin: 10px 0;
-}
-
-button {
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #007BFF;
-  color: #fff;
-}
-
-.container {
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
+  padding: 20px;
   text-align: center;
 }
 
-.manual-announcement, .custom-schedule {
+h1 {
+  font-size: 24px;
+  color: #333;
+}
+
+.announcement {
   margin-bottom: 30px;
 }
 
-/* Dark Mode */
-body.dark-mode {
-  background-color: #2d3748;
-  color: #fff;
+#announcementInput {
+  padding: 10px;
+  margin-top: 10px;
+  width: 50%;
+  font-size: 16px;
 }
 
-body.dark-mode button {
-  background-color: #4A5568;
-  color: #fff;
+#announceButton {
+  padding: 10px 20px;
+  margin-top: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
 }
+
+#announceButton:hover {
+  background-color: #45a049;
+}
+
 /* History Section Styling */
 .history {
   margin-top: 30px;
@@ -72,4 +64,18 @@ body.dark-mode button {
 
 #announcementHistory li:last-child {
   border-bottom: none;
+}
+
+#clearHistoryButton {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+#clearHistoryButton:hover {
+  background-color: #e53935;
 }
