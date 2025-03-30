@@ -6,9 +6,15 @@ const announceButton = document.getElementById('announceButton');
 const announcementInput = document.getElementById('announcementInput');
 const historyList = document.getElementById('announcementHistory');
 const clearHistoryButton = document.getElementById('clearHistoryButton');
+const scheduleButton = document.getElementById('scheduleButton');
+const scheduleTimeInput = document.getElementById('scheduleTime');
+const scheduleRepeatSelect = document.getElementById('scheduleRepeat');
+const scheduleVoiceSelect = document.getElementById('scheduleVoice');
+const upcomingAnnouncementsList = document.getElementById('upcomingAnnouncements');
 
-// Retrieve stored history from localStorage (if any)
+// Retrieve stored history and upcoming announcements from localStorage (if any)
 let announcementHistory = JSON.parse(localStorage.getItem('announcementHistory')) || [];
+let upcomingAnnouncements = JSON.parse(localStorage.getItem('upcomingAnnouncements')) || [];
 
 // Available Voices
 let voices = [];
@@ -22,7 +28,7 @@ function populateVoiceList() {
     const option = document.createElement('option');
     option.textContent = voice.name;
     option.value = voice.name;
-    voiceSelect.appendChild(option);
+    scheduleVoiceSelect.appendChild(option);
   });
 }
 
@@ -44,6 +50,16 @@ function updateHistory() {
   });
 }
 
+// Function to update the upcoming announcements list
+function updateUpcoming() {
+  upcomingAnnouncementsList.innerHTML = '';
+  upcomingAnnouncements.forEach((entry, index) => {
+    const li = document.createElement('li');
+    li.textContent = `${entry.timestamp} - ${entry.message}`;
+    upcomingAnnouncementsList.appendChild(li);
+  });
+}
+
 // Function to save a new announcement to history
 function saveAnnouncementToHistory(message) {
   const timestamp = new Date().toLocaleString();
@@ -54,9 +70,9 @@ function saveAnnouncementToHistory(message) {
 }
 
 // Function to speak the message and save it to history
-function speakMessage(message) {
+function speakMessage(message, voice = currentVoice) {
   const utterance = new SpeechSynthesisUtterance(message);
-  utterance.voice = voices.find(voice => voice.name === currentVoice);
+  utterance.voice = voices.find(v => v.name === voice);
   utterance.rate = 1;
   utterance.pitch = 1;
   synth.speak(utterance);
@@ -80,7 +96,18 @@ clearHistoryButton.addEventListener('click', () => {
   updateHistory();
 });
 
-// Load history when the page loads
-window.addEventListener('load', () => {
-  updateHistory();
-});
+// Function to schedule an announcement
+function scheduleAnnouncement(time, message, repeat = 'none', voice = currentVoice) {
+  const [hours, minutes] = time.split(':');
+  const scheduledTime = new Date();
+  scheduledTime.setHours(hours, minutes, 0, 0); // Set the scheduled time
+
+  // Calculate time difference between now and the scheduled time
+  const now = new Date();
+  const delay = scheduledTime - now;
+
+  // If the scheduled time is in the future, schedule the announcement
+  if (delay > 0) {
+    const scheduleDetails = { message, timestamp: scheduledTime.toLocaleString(), repeat };
+    upcomingAnnouncements.push(scheduleDetails);
+    localStorage.setItem('upcomingAnnouncements', JSON
