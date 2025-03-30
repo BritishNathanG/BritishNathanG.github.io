@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Announcement System</title>
+  <title>Automated Announcement System</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -14,6 +14,30 @@
     <label for="announcementInput">Enter Announcement:</label>
     <input type="text" id="announcementInput" placeholder="Type your announcement here">
     <button id="announceButton">Announce</button>
+  </section>
+
+  <!-- Scheduled Announcement Section -->
+  <section class="schedule">
+    <h2>Schedule an Announcement</h2>
+    <label for="scheduleTime">Time (HH:MM):</label>
+    <input type="time" id="scheduleTime">
+    <label for="scheduleRepeat">Repeat every:</label>
+    <select id="scheduleRepeat">
+      <option value="none">None</option>
+      <option value="hourly">Hourly</option>
+      <option value="daily">Daily</option>
+    </select>
+    <label for="scheduleVoice">Select Voice:</label>
+    <select id="scheduleVoice">
+      <option value="default">Default</option>
+    </select>
+    <button id="scheduleButton">Schedule Announcement</button>
+  </section>
+
+  <!-- Scheduled Announcements List -->
+  <section class="upcoming">
+    <h2>Upcoming Announcements</h2>
+    <ul id="upcomingAnnouncements"></ul>
   </section>
 
   <!-- History Section -->
