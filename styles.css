@@ -1,105 +1,47 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* Basic Styles */
 body {
-  font-family: 'Poppins', sans-serif;
-  background-color: #2d3748;
-  color: #fff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-  transition: background-color 0.3s ease;
-}
-
-.container {
-  width: 90%;
-  max-width: 1000px;
+  font-family: Arial, sans-serif;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-  text-align: center;
-  overflow: hidden;
+  background-color: #fff;
+  color: #333;
+  margin: 0;
 }
 
-header h1 {
-  font-size: 2.5rem;
-  margin-bottom: 20px;
-  font-family: 'Roboto', sans-serif;
+h1, h2 {
+  color: #444;
 }
 
-textarea, select, input[type="range"], button {
-  width: 100%;
-  padding: 10px;
+textarea, select, input, button {
   margin: 10px 0;
-  border-radius: 8px;
-  border: none;
-  background: #444;
-  color: white;
-  font-size: 1rem;
 }
 
 button {
   cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
 button:hover {
-  background-color: #38b2ac;
+  background-color: #007BFF;
+  color: #fff;
 }
 
-.announcement {
-  margin-bottom: 20px;
-}
-
-.settings h2 {
-  margin-top: 30px;
-  font-size: 1.5rem;
-}
-
-.control {
-  display: flex;
-  justify-content: space-between;
-  margin: 10px 0;
-}
-
-.history {
-  margin-top: 30px;
-}
-
-.history ul {
-  list-style: none;
-  padding: 0;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.history li {
-  padding: 5px;
-  background: #333;
-  border-radius: 5px;
-  margin: 5px 0;
-}
-
-body.dark {
-  background-color: #1a202c;
-}
-
-body.light {
-  background-color: #edf2f7;
-  color: #2d3748;
-}
-
-#particles-js {
-  position: absolute;
-  top: 0;
-  left: 0;
+.container {
   width: 100%;
-  height: 100%;
-  z-index: -1;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.manual-announcement, .custom-schedule {
+  margin-bottom: 30px;
+}
+
+/* Dark Mode */
+body.dark-mode {
+  background-color: #2d3748;
+  color: #fff;
+}
+
+body.dark-mode button {
+  background-color: #4A5568;
+  color: #fff;
 }
