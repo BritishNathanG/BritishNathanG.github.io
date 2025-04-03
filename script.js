@@ -9,20 +9,20 @@ const timeInput = document.getElementById('time');
 const scheduleList = document.getElementById('scheduleList');
 const repeatSelect = document.getElementById('repeat');
 const voiceSelect = document.getElementById('voice');
-const speedInput = document.getElementById('speed');
-const pitchInput = document.getElementById('pitch');
+const effectSelect = document.getElementById('effect');
+const webhookUrlInput = document.getElementById('webhookUrl');
+const testWebhookButton = document.getElementById('testWebhook');
 const beepSound = document.getElementById('beep');
-const themeToggle = document.getElementById('toggleTheme');
-const historyList = document.getElementById('historyList');
-const clearHistoryButton = document.getElementById('clearHistory');
-const exportButton = document.getElementById('exportData');
-const importInput = document.getElementById('importData');
+const bgMusicInput = document.getElementById('bgMusic');
+const bgAudio = document.getElementById('bgAudio');
+const statsCount = document.getElementById('statsCount');
+const countdownTimer = document.getElementById('countdown');
 
-// Load stored schedules & history
+// Load stored data
 let schedules = JSON.parse(localStorage.getItem('schedules')) || [];
-let history = JSON.parse(localStorage.getItem('history')) || [];
+let stats = JSON.parse(localStorage.getItem('stats')) || { announcementsMade: 0 };
 
-// Load available voices
+// Load voices
 function loadVoices() {
   voiceSelect.innerHTML = '';
   synth.getVoices().forEach((voice) => {
@@ -37,44 +37,39 @@ if (synth.onvoiceschanged !== undefined) {
   synth.onvoiceschanged = loadVoices;
 }
 
-// Speak a message
-function speakMessage(message, voice = voiceSelect.value) {
+// Apply voice effect
+function applyEffect(text, effect) {
+  switch (effect) {
+    case 'echo': return text + " ... " + text;
+    case 'robot': return text.split('').join(' ');
+    case 'whisper': return text.toLowerCase();
+    default: return text;
+  }
+}
+
+// Speak message
+function speakMessage(message, voice, effect) {
   if (!message.trim()) return;
   beepSound.play();
   setTimeout(() => {
-    const utterance = new SpeechSynthesisUtterance(message);
+    const utterance = new SpeechSynthesisUtterance(applyEffect(message, effect));
     utterance.voice = synth.getVoices().find(v => v.name === voice);
-    utterance.rate = speedInput.value;
-    utterance.pitch = pitchInput.value;
     synth.speak(utterance);
-    saveToHistory(message);
+    stats.announcementsMade++;
+    localStorage.setItem('stats', JSON.stringify(stats));
+    updateStats();
   }, 1000);
 }
 
+// Update stats
+function updateStats() {
+  statsCount.textContent = stats.announcementsMade;
+}
+updateStats();
+
 // Manual announcement
 announceNowButton.addEventListener('click', () => {
-  speakMessage(announcementInput.value);
-});
-
-// Save to history
-function saveToHistory(message) {
-  const entry = { message, timestamp: new Date().toLocaleString() };
-  history.push(entry);
-  localStorage.setItem('history', JSON.stringify(history));
-  updateHistoryList();
-}
-
-// Update history list
-function updateHistoryList() {
-  historyList.innerHTML = history.map(entry => `<li>${entry.timestamp}: ${entry.message}</li>`).join('');
-}
-updateHistoryList();
-
-// Clear history
-clearHistoryButton.addEventListener('click', () => {
-  history = [];
-  localStorage.removeItem('history');
-  updateHistoryList();
+  speakMessage(announcementInput.value, voiceSelect.value, effectSelect.value);
 });
 
 // Schedule announcement
@@ -94,56 +89,41 @@ scheduleButton.addEventListener('click', () => {
   alert(`Scheduled at ${time}`);
 });
 
-// Update the displayed schedule
-function updateScheduleList() {
-  scheduleList.innerHTML = schedules.map(item => `<li>${item.time} - ${item.message} (${item.repeat})</li>`).join('');
-}
-updateScheduleList();
-
-// Run scheduled announcements
+// Countdown timer
 setInterval(() => {
+  if (schedules.length === 0) {
+    countdownTimer.textContent = 'N/A';
+    return;
+  }
   const now = new Date();
-  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  const nextSchedule = schedules[0].time;
+  const [hours, minutes] = nextSchedule.split(':');
+  const nextTime = new Date();
+  nextTime.setHours(hours, minutes, 0, 0);
+  let diff = (nextTime - now) / 1000;
+  let min = Math.floor(diff / 60);
+  let sec = Math.floor(diff % 60);
+  countdownTimer.textContent = `${min}:${sec}`;
+}, 1000);
 
-  schedules.forEach((item) => {
-    if (item.time === currentTime) {
-      speakMessage(item.message);
-      
-      // Handle repeating announcements
-      if (item.repeat === 'hourly') {
-        item.time = new Date(Date.now() + 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      } else if (item.repeat === 'daily') {
-        item.time = new Date(Date.now() + 86400000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      }
-      localStorage.setItem('schedules', JSON.stringify(schedules));
-      updateScheduleList();
-    }
-  });
-}, 60000);
-
-// Dark mode toggle
-themeToggle.addEventListener('click', () => {
-  document.body.classList.toggle('dark-mode');
+// Test Webhook
+testWebhookButton.addEventListener('click', () => {
+  fetch(webhookUrlInput.value, {
+    method: 'POST',
+    body: JSON.stringify({ message: "Test Announcement!" }),
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(response => response.json())
+  .then(data => alert('Webhook sent successfully!'))
+  .catch(err => alert('Webhook failed!'));
 });
 
-// Export & Import Schedule
-exportButton.addEventListener('click', () => {
-  const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(schedules))}`;
-  const link = document.createElement('a');
-  link.href = dataStr;
-  link.download = 'schedule.json';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-});
-
-importInput.addEventListener('change', (event) => {
+// Play background music
+bgMusicInput.addEventListener('change', (event) => {
   const file = event.target.files[0];
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    schedules = JSON.parse(e.target.result);
-    localStorage.setItem('schedules', JSON.stringify(schedules));
-    updateScheduleList();
-  };
-  reader.readAsText(file);
+  if (file) {
+    const url = URL.createObjectURL(file);
+    bgAudio.src = url;
+    bgAudio.play();
+  }
 });
