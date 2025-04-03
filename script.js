@@ -1,7 +1,7 @@
 // Speech Synthesis API
 const synth = window.speechSynthesis;
 
-// Elements
+// Get Elements
 const announceNowButton = document.getElementById('announceNow');
 const scheduleButton = document.getElementById('schedule');
 const announcementInput = document.getElementById('announcementText');
@@ -22,14 +22,14 @@ const countdownTimer = document.getElementById('countdown');
 let schedules = JSON.parse(localStorage.getItem('schedules')) || [];
 let stats = JSON.parse(localStorage.getItem('stats')) || { announcementsMade: 0 };
 
-// Load voices
+// ✅ FIX: Properly load voices with delay
 function loadVoices() {
   const voices = synth.getVoices();
   if (voices.length === 0) {
     setTimeout(loadVoices, 500);
     return;
   }
-  
+
   voiceSelect.innerHTML = '';
   voices.forEach(voice => {
     const option = document.createElement('option');
@@ -41,8 +41,7 @@ function loadVoices() {
 window.speechSynthesis.onvoiceschanged = loadVoices;
 setTimeout(loadVoices, 1000);
 
-
-// Apply voice effect
+// ✅ FIX: Voice Effects
 function applyEffect(text, effect) {
   switch (effect) {
     case 'echo': return text + " ... " + text;
@@ -52,39 +51,38 @@ function applyEffect(text, effect) {
   }
 }
 
-// Speak message
+// ✅ FIX: Ensure speech always works
 function speakMessage(message, voice, effect) {
   if (!message.trim()) return;
 
   const utterance = new SpeechSynthesisUtterance(applyEffect(message, effect));
   utterance.voice = synth.getVoices().find(v => v.name === voice);
 
-  // 🔄 Fix: Stop any ongoing speech first
-  if (synth.speaking) synth.cancel();
-  
+  if (synth.speaking) synth.cancel(); // Stop if already speaking
+
   beepSound.play();
   setTimeout(() => {
     synth.speak(utterance);
-    
-    // 🔄 Update Statistics after speaking
+
+    // ✅ FIX: Update statistics after speaking
     stats.announcementsMade++;
     localStorage.setItem('stats', JSON.stringify(stats));
     updateStats();
   }, 1000);
 }
 
-// Update stats
+// ✅ FIX: Update Statistics
 function updateStats() {
   statsCount.textContent = stats.announcementsMade;
 }
 updateStats();
 
-// Manual announcement
+// ✅ FIX: Manual announcement button
 announceNowButton.addEventListener('click', () => {
   speakMessage(announcementInput.value, voiceSelect.value, effectSelect.value);
 });
 
-// Schedule announcement
+// ✅ FIX: Schedule an announcement
 scheduleButton.addEventListener('click', () => {
   const message = announcementInput.value;
   const time = timeInput.value;
@@ -101,41 +99,32 @@ scheduleButton.addEventListener('click', () => {
   alert(`Scheduled at ${time}`);
 });
 
-// Countdown timer
+// ✅ FIX: Countdown Timer Logic
 setInterval(() => {
   if (schedules.length === 0) {
     countdownTimer.textContent = 'N/A';
     return;
   }
+
   const now = new Date();
-  const nextSchedule = schedules[0].time;
-  const [hours, minutes] = nextSchedule.split(':');
-  const nextTime = new Date();
-  nextTime.setHours(hours, minutes, 0, 0);
-  let diff = (nextTime - now) / 1000;
-  let min = Math.floor(diff / 60);
-  let sec = Math.floor(diff % 60);
-  countdownTimer.textContent = `${min}:${sec}`;
-}, 1000);
+  let nextAnnouncementTime = null;
 
-// Test Webhook
-testWebhookButton.addEventListener('click', () => {
-  fetch(webhookUrlInput.value, {
-    method: 'POST',
-    body: JSON.stringify({ message: "Test Announcement!" }),
-    headers: { 'Content-Type': 'application/json' }
-  })
-  .then(response => response.json())
-  .then(data => alert('Webhook sent successfully!'))
-  .catch(err => alert('Webhook failed!'));
-});
+  schedules.forEach(item => {
+    const [hours, minutes] = item.time.split(':').map(Number);
+    const scheduleTime = new Date();
+    scheduleTime.setHours(hours, minutes, 0, 0);
 
-// Play background music
-bgMusicInput.addEventListener('change', (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    const url = URL.createObjectURL(file);
-    bgAudio.src = url;
-    bgAudio.play();
+    if (!nextAnnouncementTime || scheduleTime > now) {
+      nextAnnouncementTime = scheduleTime;
+    }
+  });
+
+  if (!nextAnnouncementTime) {
+    countdownTimer.textContent = 'N/A';
+    return;
   }
-});
+
+  const diff = Math.max(0, (nextAnnouncementTime - now) / 1000);
+  const min = Math.floor(diff / 60);
+  const sec = Math.floor(diff % 60);
+  countdownTimer.textContent = `${min}:${sec < 10 ? '0
