@@ -26,10 +26,12 @@ let stats = JSON.parse(localStorage.getItem('stats')) || { announcementsMade: 0 
 function loadVoices() {
   const voices = synth.getVoices();
   if (voices.length === 0) {
+    console.log("Retrying voice load...");
     setTimeout(loadVoices, 500);
     return;
   }
 
+  console.log("Voices Loaded:", voices.length);
   voiceSelect.innerHTML = '';
   voices.forEach(voice => {
     const option = document.createElement('option');
@@ -37,7 +39,14 @@ function loadVoices() {
     option.value = voice.name;
     voiceSelect.appendChild(option);
   });
+
+  // Select a default voice
+  if (voices.length > 0) {
+    voiceSelect.value = voices[0].name;
+  }
 }
+
+// Fix voice loading for Chrome
 window.speechSynthesis.onvoiceschanged = loadVoices;
 setTimeout(loadVoices, 1000);
 
@@ -55,20 +64,33 @@ function applyEffect(text, effect) {
 function speakMessage(message, voice, effect) {
   if (!message.trim()) return;
 
+  // Ensure voices are loaded
+  const availableVoices = synth.getVoices();
+  if (availableVoices.length === 0) {
+    alert("No voices found! Please refresh.");
+    return;
+  }
+
   const utterance = new SpeechSynthesisUtterance(applyEffect(message, effect));
-  utterance.voice = synth.getVoices().find(v => v.name === voice);
+  utterance.voice = availableVoices.find(v => v.name === voice) || availableVoices[0];
 
-  if (synth.speaking) synth.cancel(); // Stop if already speaking
+  console.log("Speaking with voice:", utterance.voice.name);
 
-  beepSound.play();
-  setTimeout(() => {
+  // Stop ongoing speech before starting
+  if (synth.speaking) {
+    synth.cancel();
+    setTimeout(() => synth.speak(utterance), 100);
+  } else {
     synth.speak(utterance);
+  }
 
-    // ✅ FIX: Update statistics after speaking
-    stats.announcementsMade++;
-    localStorage.setItem('stats', JSON.stringify(stats));
-    updateStats();
-  }, 1000);
+  // Play beep sound before announcement
+  beepSound.play();
+
+  // Update statistics
+  stats.announcementsMade++;
+  localStorage.setItem('stats', JSON.stringify(stats));
+  updateStats();
 }
 
 // ✅ FIX: Update Statistics
@@ -127,4 +149,36 @@ setInterval(() => {
   const diff = Math.max(0, (nextAnnouncementTime - now) / 1000);
   const min = Math.floor(diff / 60);
   const sec = Math.floor(diff % 60);
-  countdownTimer.textContent = `${min}:${sec < 10 ? '0
+  countdownTimer.textContent = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+}, 1000);
+
+// ✅ FIX: Webhook Testing
+testWebhookButton.addEventListener('click', () => {
+  fetch(webhookUrlInput.value, {
+    method: 'POST',
+    body: JSON.stringify({ message: "Test Announcement!" }),
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(response => response.json())
+  .then(data => alert('Webhook sent successfully!'))
+  .catch(err => alert('Webhook failed!'));
+});
+
+// ✅ FIX: Background Music Support
+bgMusicInput.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const url = URL.createObjectURL(file);
+    bgAudio.src = url;
+    bgAudio.play();
+  }
+});
+
+// ✅ FIX: Enable Speech on User Interaction (Chrome Fix)
+document.body.addEventListener('click', () => {
+  if (!synth.speaking) {
+    const testUtterance = new SpeechSynthesisUtterance("Voice activated.");
+    synth.speak(testUtterance);
+    console.log("Speech activated!");
+  }
+}, { once: true });
