@@ -24,18 +24,23 @@ let stats = JSON.parse(localStorage.getItem('stats')) || { announcementsMade: 0 
 
 // Load voices
 function loadVoices() {
+  const voices = synth.getVoices();
+  if (voices.length === 0) {
+    setTimeout(loadVoices, 500);
+    return;
+  }
+  
   voiceSelect.innerHTML = '';
-  synth.getVoices().forEach((voice) => {
+  voices.forEach(voice => {
     const option = document.createElement('option');
     option.textContent = voice.name;
     option.value = voice.name;
     voiceSelect.appendChild(option);
   });
 }
-loadVoices();
-if (synth.onvoiceschanged !== undefined) {
-  synth.onvoiceschanged = loadVoices;
-}
+window.speechSynthesis.onvoiceschanged = loadVoices;
+setTimeout(loadVoices, 1000);
+
 
 // Apply voice effect
 function applyEffect(text, effect) {
@@ -50,11 +55,18 @@ function applyEffect(text, effect) {
 // Speak message
 function speakMessage(message, voice, effect) {
   if (!message.trim()) return;
+
+  const utterance = new SpeechSynthesisUtterance(applyEffect(message, effect));
+  utterance.voice = synth.getVoices().find(v => v.name === voice);
+
+  // 🔄 Fix: Stop any ongoing speech first
+  if (synth.speaking) synth.cancel();
+  
   beepSound.play();
   setTimeout(() => {
-    const utterance = new SpeechSynthesisUtterance(applyEffect(message, effect));
-    utterance.voice = synth.getVoices().find(v => v.name === voice);
     synth.speak(utterance);
+    
+    // 🔄 Update Statistics after speaking
     stats.announcementsMade++;
     localStorage.setItem('stats', JSON.stringify(stats));
     updateStats();
