@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Automated Announcements</title>
+  <title>🚀 Super Announcement System</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>🔊 Automated Announcements</h1>
+  <h1>🔊 Supercharged Announcements</h1>
 
   <button id="toggleTheme">🌙 Toggle Dark Mode</button>
 
@@ -30,15 +30,21 @@
     </select>
     <label for="voice">Voice:</label>
     <select id="voice"></select>
-    <label for="speed">Speed:</label>
-    <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
-    <label for="pitch">Pitch:</label>
-    <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1">
+    <label for="effect">Voice Effect:</label>
+    <select id="effect">
+      <option value="none">None</option>
+      <option value="echo">Echo</option>
+      <option value="robot">Robot</option>
+      <option value="whisper">Whisper</option>
+    </select>
+    <label for="bgMusic">Background Music:</label>
+    <input type="file" id="bgMusic" accept="audio/*">
     <button id="schedule">Schedule</button>
   </section>
 
   <section>
     <h2>Upcoming Announcements</h2>
+    <p>Next Announcement In: <span id="countdown">00:00</span></p>
     <ul id="scheduleList"></ul>
   </section>
 
@@ -49,12 +55,24 @@
   </section>
 
   <section>
+    <h2>Statistics</h2>
+    <p>Total Announcements Made: <span id="statsCount">0</span></p>
+  </section>
+
+  <section>
+    <h2>Webhook Integration</h2>
+    <input type="url" id="webhookUrl" placeholder="Enter Webhook URL">
+    <button id="testWebhook">Test Webhook</button>
+  </section>
+
+  <section>
     <h2>Backup & Restore</h2>
     <button id="exportData">📤 Export Schedule</button>
     <input type="file" id="importData">
   </section>
 
   <audio id="beep" src="beep.mp3"></audio>
+  <audio id="bgAudio"></audio>
 
   <script src="script.js"></script>
 </body>
