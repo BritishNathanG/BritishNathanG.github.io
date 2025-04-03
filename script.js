@@ -1,150 +1,149 @@
-// Initialize the Speech Synthesis API
+// Speech Synthesis API
 const synth = window.speechSynthesis;
 
 // Elements
-const announceButton = document.getElementById('announceButton');
-const announcementInput = document.getElementById('announcementInput');
-const historyList = document.getElementById('announcementHistory');
-const clearHistoryButton = document.getElementById('clearHistoryButton');
-const scheduleButton = document.getElementById('scheduleButton');
-const scheduleTimeInput = document.getElementById('scheduleTime');
-const scheduleRepeatSelect = document.getElementById('scheduleRepeat');
-const scheduleVoiceSelect = document.getElementById('scheduleVoice');
-const upcomingAnnouncementsList = document.getElementById('upcomingAnnouncements');
+const announceNowButton = document.getElementById('announceNow');
+const scheduleButton = document.getElementById('schedule');
+const announcementInput = document.getElementById('announcementText');
+const timeInput = document.getElementById('time');
+const scheduleList = document.getElementById('scheduleList');
+const repeatSelect = document.getElementById('repeat');
+const voiceSelect = document.getElementById('voice');
+const speedInput = document.getElementById('speed');
+const pitchInput = document.getElementById('pitch');
+const beepSound = document.getElementById('beep');
+const themeToggle = document.getElementById('toggleTheme');
+const historyList = document.getElementById('historyList');
+const clearHistoryButton = document.getElementById('clearHistory');
+const exportButton = document.getElementById('exportData');
+const importInput = document.getElementById('importData');
 
-// Retrieve stored history and upcoming announcements from localStorage (if any)
-let announcementHistory = JSON.parse(localStorage.getItem('announcementHistory')) || [];
-let upcomingAnnouncements = JSON.parse(localStorage.getItem('upcomingAnnouncements')) || [];
+// Load stored schedules & history
+let schedules = JSON.parse(localStorage.getItem('schedules')) || [];
+let history = JSON.parse(localStorage.getItem('history')) || [];
 
-// Available Voices
-let voices = [];
-const voiceSelect = document.createElement('select');
-document.body.appendChild(voiceSelect);
-
-// Populate voice select dropdown with available voices
-function populateVoiceList() {
-  voices = synth.getVoices();
-  voices.forEach(voice => {
+// Load available voices
+function loadVoices() {
+  voiceSelect.innerHTML = '';
+  synth.getVoices().forEach((voice) => {
     const option = document.createElement('option');
     option.textContent = voice.name;
     option.value = voice.name;
-    scheduleVoiceSelect.appendChild(option);
+    voiceSelect.appendChild(option);
   });
 }
-
-populateVoiceList();
+loadVoices();
 if (synth.onvoiceschanged !== undefined) {
-  synth.onvoiceschanged = populateVoiceList;
+  synth.onvoiceschanged = loadVoices;
 }
 
-// Set default voice to the first available voice
-let currentVoice = voices[0] ? voices[0].name : 'Google US English';
-
-// Function to update the history section
-function updateHistory() {
-  historyList.innerHTML = '';
-  announcementHistory.forEach(entry => {
-    const li = document.createElement('li');
-    li.textContent = `${entry.timestamp}: ${entry.message}`;
-    historyList.appendChild(li);
-  });
+// Speak a message
+function speakMessage(message, voice = voiceSelect.value) {
+  if (!message.trim()) return;
+  beepSound.play();
+  setTimeout(() => {
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.voice = synth.getVoices().find(v => v.name === voice);
+    utterance.rate = speedInput.value;
+    utterance.pitch = pitchInput.value;
+    synth.speak(utterance);
+    saveToHistory(message);
+  }, 1000);
 }
 
-// Function to update the upcoming announcements list
-function updateUpcoming() {
-  upcomingAnnouncementsList.innerHTML = '';
-  upcomingAnnouncements.forEach((entry, index) => {
-    const li = document.createElement('li');
-    li.textContent = `${entry.timestamp} - ${entry.message}`;
-    upcomingAnnouncementsList.appendChild(li);
-  });
-}
-
-// Function to save a new announcement to history
-function saveAnnouncementToHistory(message) {
-  const timestamp = new Date().toLocaleString();
-  const newEntry = { message, timestamp };
-  announcementHistory.push(newEntry);
-  localStorage.setItem('announcementHistory', JSON.stringify(announcementHistory));
-  updateHistory();
-}
-
-// Function to speak the message and save it to history
-function speakMessage(message, voice = currentVoice) {
-  const utterance = new SpeechSynthesisUtterance(message);
-  utterance.voice = voices.find(v => v.name === voice);
-  utterance.rate = 1;
-  utterance.pitch = 1;
-  synth.speak(utterance);
-
-  // Save this announcement to the history after it's spoken
-  saveAnnouncementToHistory(message);
-}
-
-// Manual announcement button click
-announceButton.addEventListener('click', () => {
-  const message = announcementInput.value;
-  if (message) {
-    speakMessage(message);
-  }
+// Manual announcement
+announceNowButton.addEventListener('click', () => {
+  speakMessage(announcementInput.value);
 });
 
-// Clear History button functionality
+// Save to history
+function saveToHistory(message) {
+  const entry = { message, timestamp: new Date().toLocaleString() };
+  history.push(entry);
+  localStorage.setItem('history', JSON.stringify(history));
+  updateHistoryList();
+}
+
+// Update history list
+function updateHistoryList() {
+  historyList.innerHTML = history.map(entry => `<li>${entry.timestamp}: ${entry.message}</li>`).join('');
+}
+updateHistoryList();
+
+// Clear history
 clearHistoryButton.addEventListener('click', () => {
-  localStorage.removeItem('announcementHistory');
-  announcementHistory = [];
-  updateHistory();
+  history = [];
+  localStorage.removeItem('history');
+  updateHistoryList();
 });
 
-// Function to schedule an announcement
-function scheduleAnnouncement(time, message, repeat = 'none', voice = currentVoice) {
-  const [hours, minutes] = time.split(':');
-  const scheduledTime = new Date();
-  scheduledTime.setHours(hours, minutes, 0, 0); // Set the scheduled time
-
-  // Calculate time difference between now and the scheduled time
-  const now = new Date();
-  const delay = scheduledTime - now;
-
-  // If the scheduled time is in the future, schedule the announcement
-  if (delay > 0) {
-    const scheduleDetails = { message, timestamp: scheduledTime.toLocaleString(), repeat };
-    upcomingAnnouncements.push(scheduleDetails);
-    localStorage.setItem('upcomingAnnouncements', JSON.stringify(upcomingAnnouncements));
-    updateUpcoming();
-
-    setTimeout(() => {
-      speakMessage(message, voice);
-
-      // Handle repeating announcements
-      if (repeat === 'hourly') {
-        scheduleAnnouncement(time, message, repeat, voice);
-      } else if (repeat === 'daily') {
-        const nextDay = new Date(scheduledTime);
-        nextDay.setDate(nextDay.getDate() + 1);
-        scheduleAnnouncement(nextDay.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), message, repeat, voice);
-      }
-    }, delay);
-  } else {
-    alert("Please choose a future time for the announcement.");
-  }
-}
-
-// Scheduled announcement button click
+// Schedule announcement
 scheduleButton.addEventListener('click', () => {
-  const scheduledTime = scheduleTimeInput.value;
   const message = announcementInput.value;
-  const repeat = scheduleRepeatSelect.value;
-  const voice = scheduleVoiceSelect.value === 'default' ? currentVoice : scheduleVoiceSelect.value;
+  const time = timeInput.value;
+  const repeat = repeatSelect.value;
 
-  if (scheduledTime && message) {
-    scheduleAnnouncement(scheduledTime, message, repeat, voice);
-    alert(`Announcement scheduled for ${scheduledTime}`);
+  if (!message || !time) {
+    alert('Please enter a message and time.');
+    return;
   }
+
+  schedules.push({ message, time, repeat });
+  localStorage.setItem('schedules', JSON.stringify(schedules));
+  updateScheduleList();
+  alert(`Scheduled at ${time}`);
 });
 
-// Load history and upcoming announcements when the page loads
-window.addEventListener('load', () => {
-  updateHistory();
-  updateUpcoming();
+// Update the displayed schedule
+function updateScheduleList() {
+  scheduleList.innerHTML = schedules.map(item => `<li>${item.time} - ${item.message} (${item.repeat})</li>`).join('');
+}
+updateScheduleList();
+
+// Run scheduled announcements
+setInterval(() => {
+  const now = new Date();
+  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+  schedules.forEach((item) => {
+    if (item.time === currentTime) {
+      speakMessage(item.message);
+      
+      // Handle repeating announcements
+      if (item.repeat === 'hourly') {
+        item.time = new Date(Date.now() + 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else if (item.repeat === 'daily') {
+        item.time = new Date(Date.now() + 86400000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      localStorage.setItem('schedules', JSON.stringify(schedules));
+      updateScheduleList();
+    }
+  });
+}, 60000);
+
+// Dark mode toggle
+themeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+});
+
+// Export & Import Schedule
+exportButton.addEventListener('click', () => {
+  const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(schedules))}`;
+  const link = document.createElement('a');
+  link.href = dataStr;
+  link.download = 'schedule.json';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});
+
+importInput.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    schedules = JSON.parse(e.target.result);
+    localStorage.setItem('schedules', JSON.stringify(schedules));
+    updateScheduleList();
+  };
+  reader.readAsText(file);
 });
